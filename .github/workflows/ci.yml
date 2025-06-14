@@ -1,0 +1,165 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        uv sync --all-extras
+    
+    - name: Install Playwright browsers
+      run: |
+        cd backend
+        uv run playwright install --with-deps
+    
+    - name: Lint with flake8
+      run: |
+        cd backend
+        uv run flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        uv run flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+    
+    - name: Type check with mypy
+      run: |
+        cd backend
+        uv run mypy app/
+    
+    - name: Format check with black
+      run: |
+        cd backend
+        uv run black --check app/
+    
+    - name: Import sort check with isort
+      run: |
+        cd backend
+        uv run isort --check-only app/
+    
+    - name: Test with pytest
+      run: |
+        cd backend
+        uv run pytest tests/ -v --tb=short
+      env:
+        TRANSFORMERS_CACHE: ./cache
+        CHROMA_PATH: ./test_data/chroma
+        DB_PATH: ./test_data/test.db
+
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 18
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Type check
+      run: |
+        cd frontend
+        npm run type-check
+    
+    - name: Lint
+      run: |
+        cd frontend
+        npm run lint
+    
+    - name: Test
+      run: |
+        cd frontend
+        npm test
+    
+    - name: Build
+      run: |
+        cd frontend
+        npm run build
+
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build backend image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./docker/backend.Dockerfile
+        push: false
+        tags: g-kentei-backend:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Build frontend image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./docker/frontend.Dockerfile
+        push: false
+        tags: g-kentei-frontend:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+    
+    - name: Security check with safety
+      run: |
+        cd backend
+        uv run pip install safety
+        uv run safety check
+    
+    - name: Run Bandit security scanner
+      run: |
+        cd backend
+        uv run pip install bandit
+        uv run bandit -r app/ -f json -o bandit-report.json || true
+    
+    - name: Upload Bandit results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: bandit-results
+        path: backend/bandit-report.json

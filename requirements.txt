@@ -1,0 +1,31 @@
+# ChromaDB & Vector検索
+chromadb==0.4.22
+sentence-transformers==2.2.2
+
+# FastAPI & Web Server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+
+# データ処理
+numpy==1.24.4
+pandas==2.1.4
+tqdm==4.66.1
+
+# ML & Transformers
+torch==2.1.2
+transformers==4.36.2
+tokenizers==0.15.0
+
+# 開発・テスト
+pytest==7.4.3
+httpx==0.25.2  # FastAPIテスト用
+
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+llama-cpp-python==0.2.11
+numpy>=1.24.0
+
+beautifulsoup4>=4.12.0
+pytest>=7.0.0

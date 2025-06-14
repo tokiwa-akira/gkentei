@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # FastAPI Backend with Embedding Search
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./cache:/app/cache  # モデルキャッシュ用
+    environment:
+      - TRANSFORMERS_CACHE=/app/cache
+      - CHROMA_PATH=/app/data/chroma
+      - DB_PATH=/app/data/problems.db
+    depends_on:
+      - embedding-init
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Embedding初期化サービス (一度だけ実行)
+  embedding-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./data:/app/data
+      - ./cache:/app/cache
+    environment:
+      - TRANSFORMERS_CACHE=/app/cache
+    command: >
+      sh -c "
+        echo 'Checking if embeddings need initialization...' &&
+        if [ ! -d '/app/data/chroma/problems' ]; then
+          echo 'Initializing embeddings...' &&
+          python ingest_embeddings.py --batch-size 50
+        else
+          echo 'Embeddings already exist, skipping initialization'
+        fi
+      "
+    restart: "no"  # 一度だけ実行
+
+  # React Frontend (PWA)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  # 永続化データ
+  app_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data
+  
+  # モデルキャッシュ
+  model_cache:
+    driver: local
+    driver_opts:
+      type: none  
+      o: bind
+      device: ./cache
+
+networks:
+  default:
+    name: g-kentei-network
