@@ -43,7 +43,7 @@
 
 ### Docker Compose（推奨）
 ```bash
-git clone https://github.com/your-username/g-kentei.git
+git clone https://github.com/tokiwa-akira/gkentei.git
 cd g-kentei
 docker compose up --build
 ```
@@ -165,9 +165,9 @@ cd backend && uv run playwright test
 
 ## 📞 サポート
 
-- 🐛 **バグレポート**: [Issues](https://github.com/your-username/g-kentei/issues)
-- 💡 **機能要望**: [Feature Requests](https://github.com/your-username/g-kentei/issues/new?template=feature_request.md)
-- ❓ **質問**: [Q&A Discussions](https://github.com/your-username/g-kentei/discussions)
+- 🐛 **バグレポート**: [Issues](https://github.com/tokiwa-akira/gkentei/issues)
+- 💡 **機能要望**: [Feature Requests](https://github.com/tokiwa-akira/gkentei/issues/new?template=feature_request.md)
+- ❓ **質問**: [Q&A Discussions](https://github.com/tokiwa-akira/gkentei/discussions)
 
 ---
 
