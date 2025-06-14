@@ -45,7 +45,7 @@
 ```bash
 git clone https://github.com/your-username/g-kentei.git
 cd g-kentei
-docker compose -f docker-compose.new.yml up --build
+docker compose up --build
 ```
 
 ### ローカル開発

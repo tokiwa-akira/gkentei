@@ -259,7 +259,7 @@ npm run dev
 ### 3. Docker Compose での確認
 ```bash
 # プロジェクトルートで
-docker compose -f docker-compose.new.yml up --build
+docker compose up --build
 ```
 
 ## 🧪 テスト実行

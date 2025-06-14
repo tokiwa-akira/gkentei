@@ -1,20 +1,22 @@
 version: '3.8'
 
 services:
-  # FastAPI Backend with Embedding Search
-  api:
+  # Backend API service
+  backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/backend.Dockerfile
     ports:
       - "8000:8000"
     volumes:
       - ./data:/app/data
-      - ./cache:/app/cache  # モデルキャッシュ用
+      - ./cache:/app/cache
+      - ./models:/app/models
     environment:
       - TRANSFORMERS_CACHE=/app/cache
       - CHROMA_PATH=/app/data/chroma
       - DB_PATH=/app/data/problems.db
+      - LLM_MODEL_PATH=/app/models/llama-3-elyza-jp-8b-q4.gguf
     depends_on:
       - embedding-init
     healthcheck:
@@ -24,43 +26,38 @@ services:
       retries: 3
     restart: unless-stopped
 
-  # Embedding初期化サービス (一度だけ実行)
+  # Frontend service
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Embedding initialization service
   embedding-init:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/backend.Dockerfile
     volumes:
       - ./data:/app/data
       - ./cache:/app/cache
     environment:
       - TRANSFORMERS_CACHE=/app/cache
+      - CHROMA_PATH=/app/data/chroma
+      - DB_PATH=/app/data/problems.db
     command: >
       sh -c "
         echo 'Checking if embeddings need initialization...' &&
-        if [ ! -d '/app/data/chroma/problems' ]; then
-          echo 'Initializing embeddings...' &&
-          python ingest_embeddings.py --batch-size 50
-        else
-          echo 'Embeddings already exist, skipping initialization'
-        fi
+        python -c 'import sys; sys.path.append(\"/app\"); from app.scripts.init_embeddings import main; main()'
       "
-    restart: "no"  # 一度だけ実行
-
-  # React Frontend (PWA)
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - REACT_APP_API_URL=http://localhost:8000
-    depends_on:
-      - api
-    restart: unless-stopped
+    restart: "no"
 
 volumes:
-  # 永続化データ
+  # Persistent data
   app_data:
     driver: local
     driver_opts:
@@ -68,13 +65,21 @@ volumes:
       o: bind
       device: ./data
   
-  # モデルキャッシュ
+  # Model cache
   model_cache:
     driver: local
     driver_opts:
       type: none  
       o: bind
       device: ./cache
+
+  # ML models
+  models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./models
 
 networks:
   default:
