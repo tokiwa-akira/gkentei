@@ -53,6 +53,10 @@ docker compose up --build
 # セットアップスクリプトを実行
 ./scripts/setup.sh
 
+# Just を使った開発（推奨）
+just dev-setup  # 初回セットアップ
+just dev        # 開発サーバー起動
+
 # または手動セットアップ
 cd backend && uv sync --all-extras
 cd ../frontend && npm install
@@ -89,9 +93,11 @@ cd frontend && npm run dev                          # Frontend: http://localhost
 
 ### DevOps
 - **UV** - 高速Pythonパッケージマネージャー
+- **Ruff** - 高速Pythonリンター・フォーマッター
 - **Docker** - コンテナ化
 - **GitHub Actions** - CI/CD
 - **Playwright** - E2Eテスト
+- **Just** - モダンなタスクランナー
 
 ## 📊 主要機能
 
@@ -128,6 +134,10 @@ cd backend && uv run pytest tests/ -v
 
 # フロントエンドテスト
 cd frontend && npm test
+
+# コード品質チェック
+cd backend && uv run ruff check app/ && uv run mypy app/
+cd frontend && npm run lint && npm run type-check
 
 # E2Eテスト
 cd backend && uv run playwright test

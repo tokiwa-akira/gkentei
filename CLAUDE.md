@@ -48,17 +48,20 @@ cd backend && python app/scripts/init_embeddings.py --reset --batch-size 100
 ### Testing
 ```bash
 # Backend tests
-cd backend && pytest tests/ -v
+cd backend && uv run pytest tests/ -v
 
 # Frontend tests
 cd frontend && npm test
 
 # Legacy tests (until migrated)
-cd backend && pytest tests/legacy/ -v
+cd backend && uv run pytest tests/legacy/ -v
 
 # Type checking
 cd frontend && npm run type-check
-cd backend && mypy app/
+cd backend && uv run mypy app/
+
+# Linting and formatting
+cd backend && uv run ruff check app/ && uv run ruff format app/
 ```
 
 ### API Testing

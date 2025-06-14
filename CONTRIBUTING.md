@@ -159,10 +159,9 @@ curl http://localhost:3000
 
 ### Python (Backend)
 ```python
-# Black フォーマッター設定 (88文字)
-# isort でインポート整理
-# flake8 でリンティング
+# Ruff でリンティング・フォーマット (88文字)
 # mypy で型チェック
+# 統合された高速ツールチェーン
 
 # 例: app/services/example_service.py
 from typing import List, Optional

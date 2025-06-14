@@ -37,6 +37,24 @@ G検定対策ツールのバックエンドAPIサーバーです。
    uv run uvicorn app.main:app --reload
    ```
 
+## 開発コマンド
+
+```bash
+# テスト実行
+uv run pytest tests/ -v
+
+# 型チェック
+uv run mypy app/
+
+# Lint と Format (Ruff)
+uv run ruff check app/        # Lint チェック
+uv run ruff format app/       # コードフォーマット
+uv run ruff check app/ --fix  # 自動修正
+
+# データベースマイグレーション
+uv run alembic upgrade head
+```
+
 ## ライセンス
 
 MIT License 

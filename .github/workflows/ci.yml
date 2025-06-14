@@ -35,26 +35,16 @@ jobs:
         cd backend
         uv run playwright install --with-deps
     
-    - name: Lint with flake8
+    - name: Lint and format check with Ruff
       run: |
         cd backend
-        uv run flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        uv run flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+        uv run ruff check app/
+        uv run ruff format --check app/
     
     - name: Type check with mypy
       run: |
         cd backend
         uv run mypy app/
-    
-    - name: Format check with black
-      run: |
-        cd backend
-        uv run black --check app/
-    
-    - name: Import sort check with isort
-      run: |
-        cd backend
-        uv run isort --check-only app/
     
     - name: Test with pytest
       run: |
@@ -148,14 +138,19 @@ jobs:
     - name: Security check with safety
       run: |
         cd backend
-        uv run pip install safety
+        uv add --dev safety
         uv run safety check
     
     - name: Run Bandit security scanner
       run: |
         cd backend
-        uv run pip install bandit
+        uv add --dev bandit
         uv run bandit -r app/ -f json -o bandit-report.json || true
+    
+    - name: Additional security lint with Ruff
+      run: |
+        cd backend
+        uv run ruff check app/ --select S  # Security rules
     
     - name: Upload Bandit results
       uses: actions/upload-artifact@v4
